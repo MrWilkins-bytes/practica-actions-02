@@ -206,19 +206,19 @@ gh run list
 
 ### Evidencia 01: pipeline inicial en verde
 
-[Evidencia 01](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia01.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia01.png))
+![Evidencia 01](img/Evidencia01.png)
 
 ### Evidencia 02: pipeline con el fallo intencionado
 
-[Evidencia 02](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia02.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia02.png))
+![Evidencia 02](img/Evidencia02.png)
 
 ### Evidencia 03: registro del error en `npm test`
 
-[Evidencia 03](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia03.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia03.png))
+![Evidencia 03](img/Evidencia03.png)
 
 ### Evidencia 04: pipeline corregido en verde
 
-[Evidencia 04](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia04.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia04.png))
+![Evidencia 04](img/Evidencia04.png)
 
 ## 10. Resultado
 
