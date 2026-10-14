@@ -4,7 +4,7 @@
   "description": "Práctica 2 de GitHub Actions con Node.js",
   "main": "index.js",
   "scripts": {
-    "test": "node -e \"console.log('Tests OK'); process.exit(0)\""
+    "test": "node -e \"console.log('Tests OK'); process.exit(1)\""
   },
   "keywords": [],
   "author": "",
