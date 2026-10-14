@@ -1,37 +1,71 @@
 # Práctica 2: Pipeline de CI con una App Real
 
-**Alumno:** Alex Hartley Wilkins  
-**Módulo:** Entornos de Desarrollo  
-**Repositorio:** [practica-actions-02](https://github.com/MrWilkins-bytes/practica-actions-02)
-
 ## 1. Objetivo
 
-Crear un proyecto mínimo de Node.js y configurar un pipeline de Integración Continua (CI) con GitHub Actions. Se ejecutan tests simulados, se comprueba la versión de Node.js y se practica el diagnóstico y la corrección de un fallo.
+Crear un pipeline de integración continua con GitHub Actions para un proyecto Node.js. El workflow debe ejecutarse al subir cambios a `main` y permitir una ejecución manual.
 
-## 2. Preparación del proyecto
+Se configurarán dos trabajos: uno para ejecutar las pruebas mediante `npm test` y otro para comprobar la versión de Node.js. Además, se provocará un fallo intencionado para comprobar que GitHub Actions detecta los errores y, posteriormente, se corregirá.
 
-Se creó un repositorio independiente y se inicializó Git:
+## 2. Crear y preparar el repositorio
 
-```bash
-cd ~/Documents/1ºDAM/EntornoDesarrollo
-mkdir -p practica-actions-02
-cd practica-actions-02
-git init -b main
-gh repo create MrWilkins-bytes/practica-actions-02 --public --source=. --remote=origin
-```
-
-Se generó el proyecto Node.js y se definió el script de prueba:
+Crear el repositorio remoto con GitHub CLI:
 
 ```bash
-npm init -y
-npm pkg set 'scripts.test=node -e "console.log('\''Tests OK'\''); process.exit(0)"'
+gh repo create practica-actions-02 --public --description "Práctica 2 de GitHub Actions con Node.js"
 ```
 
-El script muestra `Tests OK` y termina con código `0` cuando el test funciona correctamente.
+Ir a la carpeta de trabajo:
 
-## 3. Workflow de GitHub Actions
+```bash
+cd ~/Documents/1ºDAM/EntornoDesarrollo/practica-actions-02
+```
 
-Archivo: `.github/workflows/ci.yml`
+Comprobar la ubicación, la rama actual, el estado del repositorio y el remoto:
+
+```bash
+pwd
+git branch --show-current
+git status
+git remote -v
+```
+
+## 3. Crear la aplicación Node.js
+
+Crear el archivo `package.json` con la información del proyecto y un comando de prueba:
+
+```json
+{
+  "name": "practica-actions-02",
+  "version": "1.0.0",
+  "description": "Práctica 2 de GitHub Actions con Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "node -e \"console.log('Tests OK'); process.exit(0)\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
+```
+
+El comando `npm test` ejecuta una instrucción de Node.js que muestra `Tests OK` y termina con el código `0`, indicando que la prueba ha finalizado correctamente.
+
+Consultar el archivo y comprobar los cambios:
+
+```bash
+cat package.json
+git status
+```
+
+## 4. Crear el workflow de integración continua
+
+Crear las carpetas donde GitHub Actions busca los workflows:
+
+```bash
+mkdir -p .github/workflows
+```
+
+Crear el archivo `.github/workflows/ci.yml`:
 
 ```yaml
 name: CI Node.js
@@ -62,92 +96,136 @@ jobs:
       - run: node --version
 ```
 
-El job `test` configura Node.js 20, instala las dependencias y ejecuta las pruebas. El job `lint` comprueba la versión de Node.js. Al no existir dependencias `needs`, ambos jobs pueden ejecutarse en paralelo.
+El workflow utiliza un entorno Ubuntu y configura Node.js 20. El trabajo `test` instala las dependencias y ejecuta las pruebas, mientras que `lint` comprueba que Node.js está disponible mostrando su versión.
 
-## 4. Subida inicial y comprobación
+Consultar el archivo:
 
 ```bash
-git add .
-git commit -m "chore: proyecto Node inicial con CI"
-git branch -M main
-git push -u origin main
-
-gh workflow run ci.yml --repo MrWilkins-bytes/practica-actions-02 --ref main
-gh run list --repo MrWilkins-bytes/practica-actions-02 --limit 3
-gh browse --repo MrWilkins-bytes/practica-actions-02 --actions
+cat .github/workflows/ci.yml
+git status
 ```
 
-## 5. Provocar un fallo intencionado
+## 5. Ejecutar el workflow y comprobar el resultado inicial
 
-Se cambió el código de salida del test de `0` a `1` para simular un fallo:
+Añadir los archivos, crear un commit y subir los cambios:
+
+```bash
+git add package.json .github/workflows/ci.yml
+git commit -m "ci: crear pipeline Node.js"
+git push
+```
+
+En GitHub, abrir la pestaña **Actions**, seleccionar `CI Node.js` y comprobar que los trabajos `test` y `lint` finalizan correctamente.
+
+También se puede consultar la ejecución desde Git Bash:
+
+```bash
+gh run list
+```
+
+## 6. Provocar un fallo intencionado
+
+Modificar el comando de prueba para que termine con el código `1`, que indica un error:
 
 ```bash
 sed -i 's/process\.exit(0)/process.exit(1)/' package.json
+```
+
+Comprobar el cambio y subirlo:
+
+```bash
+cat package.json
+git diff
 git add package.json
 git commit -m "test: provocar fallo intencionado"
 git push
 ```
 
-Se consultó la ejecución y se revisó el log del paso `npm test`:
+En GitHub Actions, abrir la nueva ejecución y comprobar que el trabajo `test` falla al ejecutar `npm test`. El trabajo `lint` puede terminar correctamente porque es independiente.
+
+Consultar las ejecuciones:
 
 ```bash
-gh run list --repo MrWilkins-bytes/practica-actions-02 --limit 3
-gh run view 38642878015 --repo MrWilkins-bytes/practica-actions-02
+gh run list
 ```
 
-El código de salida `1` hace que el job `test` falle. El pipeline identifica así el problema automáticamente.
+Esta prueba demuestra que el pipeline detecta un error en el comando de pruebas.
 
-## 6. Corrección del fallo
+## 7. Corregir el fallo y comprobar el pipeline
 
-Se restauró el código de salida `0`:
+Restaurar el código de salida `0` en `package.json`:
 
 ```bash
 sed -i 's/process\.exit(1)/process.exit(0)/' package.json
+```
+
+Comprobar el archivo, guardar la corrección y subirla:
+
+```bash
+cat package.json
+git diff
 git add package.json
 git commit -m "fix: restaurar tests correctos"
 git push
-
-gh run list --repo MrWilkins-bytes/practica-actions-02 --limit 3
-git status
 ```
 
-Tras la corrección, el pipeline volvió a finalizar correctamente y el repositorio quedó actualizado.
+Abrir **Actions** y comprobar que la nueva ejecución termina correctamente, con los trabajos `test` y `lint` en verde.
 
-## 7. Evidencias
+Consultar las últimas ejecuciones:
 
-Todas las capturas se encuentran en la carpeta `img/`.
+```bash
+gh run list
+```
+
+## 8. Comandos de consulta utilizados
+
+Consultar la versión y la autenticación de GitHub CLI:
+
+```bash
+gh --version
+gh auth status
+```
+
+Consultar los archivos del proyecto:
+
+```bash
+ls -la
+ls -la .github/workflows
+ls -la img
+```
+
+Consultar el estado del repositorio y las últimas ejecuciones:
+
+```bash
+git status
+git log --oneline -5
+gh run list
+```
+
+## 9. Evidencias
 
 ### Evidencia 01: pipeline inicial en verde
 
-Los jobs `test` y `lint` aparecen en verde.
+[Evidencia 01](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia01.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia01.png))
 
-![Evidencia 01: pipeline inicial en verde](img/Evidencia01.png)
+### Evidencia 02: pipeline con el fallo intencionado
 
-### Evidencia 02: pipeline en rojo
+[Evidencia 02](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia02.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia02.png))
 
-Vista general de la ejecución fallida después de provocar el error intencionadamente.
+### Evidencia 03: registro del error en `npm test`
 
-![Evidencia 02: pipeline en rojo](img/Evidencia02.png)
-
-### Evidencia 03: log del fallo
-
-Detalle del paso `npm test`, mostrando el error y el código de salida `1`.
-
-![Evidencia 03: log del fallo](img/Evidencia03.png)
+[Evidencia 03](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia03.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia03.png))
 
 ### Evidencia 04: pipeline corregido en verde
 
-Tras restaurar `process.exit(0)`, los jobs finalizan correctamente.
+[Evidencia 04](https://github.com/MrWilkins-bytes/practica-actions-02/blob/main/img/Evidencia04.png) ([image](https://github.com/MrWilkins-bytes/practica-actions-02/raw/main/img/Evidencia04.png))
 
-![Evidencia 04: pipeline corregido en verde](img/Evidencia04.png)
+## 10. Resultado
 
-## 8. Reflexión final
+Se ha configurado un pipeline de integración continua con GitHub Actions para un proyecto Node.js. El workflow se ejecuta al subir cambios a `main` y también puede lanzarse manualmente mediante `workflow_dispatch`.
 
-- **`uses` frente a `run`:** `uses` reutiliza acciones mantenidas, como `actions/setup-node`; `run` ejecuta comandos en el runner.
-- **Paralelismo:** los jobs independientes se ejecutan en paralelo porque no tienen una dependencia `needs`.
-- **Diagnóstico:** el log permite identificar el comando fallido y su código de salida.
-- **Ciclo de CI:** se verificó el pipeline en verde, se provocó un fallo, se diagnosticó y se corrigió para recuperar el estado correcto.
+Se han creado dos trabajos independientes: `test`, que instala las dependencias y ejecuta `npm test`, y `lint`, que comprueba la disponibilidad de Node.js.
 
-## 9. Repositorio
+Por último, se ha provocado un fallo intencionado para comprobar que el pipeline lo detecta y se ha corregido el código para recuperar una ejecución satisfactoria.
 
-[Ver practica-actions-02 en GitHub](https://github.com/MrWilkins-bytes/practica-actions-02)
+Repositorio: [practica-actions-02](https://github.com/MrWilkins-bytes/practica-actions-02)
